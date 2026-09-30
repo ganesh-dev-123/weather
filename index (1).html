@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>National Weather Big Data Analytics Platform</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{
+  --bg:#07111f;--panel:#0d1b2d;--panel2:#10233a;--line:#1d3855;
+  --text:#edf6ff;--muted:#8fa8c1;--primary:#35a7ff;--cyan:#27d3e8;
+  --green:#32d583;--orange:#ffb648;--red:#ff6678;--shadow:0 18px 45px rgba(0,0,0,.22)
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,Segoe UI,Arial,sans-serif;background:linear-gradient(135deg,#06101d,#0a1728 50%,#07111f);color:var(--text);min-height:100vh}
+button,input,select{font:inherit}
+.app{display:flex;min-height:100vh}
+.sidebar{width:245px;background:#071322;border-right:1px solid var(--line);padding:22px 15px;position:fixed;height:100vh;z-index:10}
+.brand{display:flex;align-items:center;gap:11px;padding:5px 10px 28px}
+.logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--cyan));display:grid;place-items:center;font-size:21px;box-shadow:0 8px 25px #159de944}
+.brand strong{font-size:15px;line-height:1.15}.brand span{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+.nav-title{font-size:10px;color:#607995;text-transform:uppercase;letter-spacing:1.5px;margin:10px 12px}
+.nav a{display:flex;gap:12px;align-items:center;color:#9db2c8;text-decoration:none;padding:12px 13px;border-radius:10px;margin:4px 0;font-size:13px}
+.nav a:hover,.nav a.active{background:#102943;color:#fff}.nav a.active{box-shadow:inset 3px 0 var(--primary)}
+.sidebar-bottom{position:absolute;bottom:22px;left:15px;right:15px;background:#0c2034;border:1px solid var(--line);padding:13px;border-radius:12px;font-size:11px;color:var(--muted)}
+.status{color:var(--green);font-weight:700;margin-top:6px}
+.main{margin-left:245px;width:calc(100% - 245px);padding:25px 28px 40px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.eyebrow{font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1.8px}
+h1{font-size:25px;margin-top:5px}
+.subtitle{color:var(--muted);font-size:12px;margin-top:5px}
+.top-actions{display:flex;gap:10px;align-items:center}
+.search{background:#0c1d30;border:1px solid var(--line);border-radius:10px;padding:10px 13px;color:white;outline:none;width:190px}
+.btn{border:1px solid var(--line);background:#10243a;color:#dcecff;padding:10px 14px;border-radius:10px;cursor:pointer;font-size:12px}
+.btn.primary{background:linear-gradient(135deg,#168fe8,#21b9d5);border:0;color:#fff}
+.grid{display:grid;gap:16px}.metrics{grid-template-columns:repeat(4,1fr)}
+.card{background:linear-gradient(145deg,#0c1b2c,#0b1929);border:1px solid var(--line);border-radius:15px;padding:18px;box-shadow:var(--shadow)}
+.metric{min-height:118px;position:relative;overflow:hidden}
+.metric:after{content:"";position:absolute;width:90px;height:90px;border-radius:50%;right:-35px;top:-35px;background:#238ed51b}
+.metric-head{display:flex;justify-content:space-between;color:var(--muted);font-size:11px}
+.metric-icon{font-size:20px}.metric-value{font-size:28px;font-weight:750;margin-top:12px}.metric-foot{font-size:10px;color:var(--green);margin-top:6px}
+.content{grid-template-columns:1.65fr 1fr;margin-top:16px}.card-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
+.card-title h2{font-size:14px}.card-title span{font-size:10px;color:var(--muted)}
+.chart-wrap{height:285px}.chart-wrap.small{height:235px}
+select{background:#10243a;border:1px solid var(--line);color:#cfe1f4;border-radius:8px;padding:7px 9px;font-size:11px;outline:none}
+.alerts{display:grid;gap:10px}.alert{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:10px;background:#0d2032;border-left:3px solid var(--orange)}
+.alert.red{border-left-color:var(--red)}.alert.green{border-left-color:var(--green)}
+.alert-icon{font-size:18px}.alert strong{display:block;font-size:12px}.alert p{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.45}
+.bottom{grid-template-columns:1fr 1fr;margin-top:16px}
+.map{height:300px;background:
+radial-gradient(circle at 48% 48%,#1b71904c 0 3%,transparent 4%),
+linear-gradient(135deg,#0a1b2b,#0a2234);border-radius:11px;border:1px solid #1b3a54;position:relative;overflow:hidden}
+.map:before{content:"INDIA";position:absolute;left:38%;top:39%;font-size:37px;font-weight:800;letter-spacing:7px;color:#38a6d722;transform:rotate(-5deg)}
+.map:after{content:"";position:absolute;inset:18px;background-image:linear-gradient(#2b78901a 1px,transparent 1px),linear-gradient(90deg,#2b78901a 1px,transparent 1px);background-size:35px 35px}
+.marker{position:absolute;z-index:2;width:13px;height:13px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 5px #27d3e833,0 0 20px #27d3e8;cursor:pointer}
+.marker.red{background:var(--red);box-shadow:0 0 0 5px #ff667833,0 0 20px #ff6678}
+.marker.orange{background:var(--orange);box-shadow:0 0 0 5px #ffb64833,0 0 20px #ffb648}
+.tooltip{position:absolute;z-index:3;background:#071523;border:1px solid var(--line);padding:7px 9px;border-radius:7px;font-size:10px;pointer-events:none;display:none}
+.table-card{margin-top:16px}.table-scroll{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:700px}th,td{text-align:left;padding:12px 10px;border-bottom:1px solid #193149;font-size:11px}th{color:#7590aa;text-transform:uppercase;font-size:9px;letter-spacing:1px}td{color:#d4e5f5}.badge{padding:4px 8px;border-radius:20px;font-size:9px;background:#12324a;color:#62c9ff}.badge.hot{background:#43292b;color:#ff8692}.badge.good{background:#12372e;color:#59e2a1}
+.footer{text-align:center;color:#58718b;font-size:10px;margin-top:25px}
+@media(max-width:1050px){.metrics{grid-template-columns:repeat(2,1fr)}.content,.bottom{grid-template-columns:1fr}}
+@media(max-width:720px){.sidebar{width:65px;padding:15px 8px}.brand div:last-child,.nav a span,.nav-title,.sidebar-bottom{display:none}.brand{padding:5px 5px 20px}.nav a{justify-content:center}.main{margin-left:65px;width:calc(100% - 65px);padding:18px 14px}.topbar{align-items:flex-start;gap:10px}.top-actions{flex-wrap:wrap;justify-content:flex-end}.search{width:140px}h1{font-size:20px}.metrics{grid-template-columns:1fr 1fr}}
+@media(max-width:500px){.metrics{grid-template-columns:1fr}.topbar{display:block}.top-actions{margin-top:12px;justify-content:flex-start}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand"><div class="logo">☁</div><div><strong>NW-BDA</strong><span>National Weather Analytics</span></div></div>
+  <div class="nav-title">Main</div>
+  <nav class="nav">
+    <a class="active" href="#dashboard">◈ <span>Dashboard</span></a>
+    <a href="#map">⌁ <span>Weather Map</span></a>
+    <a href="#analytics">◫ <span>Analytics</span></a>
+    <a href="#stations">◉ <span>Weather Stations</span></a>
+    <a href="#alerts">⚠ <span>Alerts</span></a>
+  </nav>
+  <div class="nav-title">System</div>
+  <nav class="nav">
+    <a href="#reports">▤ <span>Reports</span></a>
+    <a href="#settings">⚙ <span>Settings</span></a>
+  </nav>
+  <div class="sidebar-bottom">DATA PIPELINE<div class="status">● All systems operational</div></div>
+</aside>
+
+<main class="main" id="dashboard">
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">Government Weather Intelligence</div>
+      <h1>National Weather Big Data Analytics</h1>
+      <p class="subtitle">Real-time environmental monitoring and predictive weather intelligence across India</p>
+    </div>
+    <div class="top-actions">
+      <input id="search" class="search" placeholder="Search city..." oninput="filterCities()">
+      <button class="btn" onclick="refreshData()">↻ Refresh</button>
+      <button class="btn primary" onclick="downloadReport()">↓ Report</button>
+    </div>
+  </header>
+
+  <section class="grid metrics">
+    <div class="card metric"><div class="metric-head"><span>AVERAGE TEMPERATURE</span><span class="metric-icon">🌡</span></div><div class="metric-value">28.6°C</div><div class="metric-foot">↑ 1.8°C vs last week</div></div>
+    <div class="card metric"><div class="metric-head"><span>NATIONAL RAINFALL</span><span class="metric-icon">☔</span></div><div class="metric-value">42.8 mm</div><div class="metric-foot">↑ 12.4% this month</div></div>
+    <div class="card metric"><div class="metric-head"><span>ACTIVE STATIONS</span><span class="metric-icon">◉</span></div><div class="metric-value">2,847</div><div class="metric-foot">98.7% reporting normally</div></div>
+    <div class="card metric"><div class="metric-head"><span>ACTIVE ALERTS</span><span class="metric-icon">⚠</span></div><div class="metric-value">17</div><div class="metric-foot" style="color:var(--orange)">5 high-priority regions</div></div>
+  </section>
+
+  <section class="grid content" id="analytics">
+    <div class="card">
+      <div class="card-title"><h2>National Temperature Trend</h2><select id="range" onchange="updateTrend()"><option>Last 24 Hours</option><option>Last 7 Days</option><option>Last 30 Days</option></select></div>
+      <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+    </div>
+    <div class="card" id="alerts">
+      <div class="card-title"><h2>Weather Alerts</h2><span>Live feed</span></div>
+      <div class="alerts">
+        <div class="alert red"><div class="alert-icon">🌪</div><div><strong>Severe Thunderstorm</strong><p>Odisha & West Bengal — Heavy rainfall and strong winds expected.</p></div></div>
+        <div class="alert"><div class="alert-icon">🌧</div><div><strong>Heavy Rainfall Warning</strong><p>Kerala — Intense rainfall possible over the next 12 hours.</p></div></div>
+        <div class="alert"><div class="alert-icon">🔥</div><div><strong>Heat Advisory</strong><p>Rajasthan — Maximum temperature may cross 42°C.</p></div></div>
+        <div class="alert green"><div class="alert-icon">✓</div><div><strong>System Status</strong><p>Weather data ingestion and processing are operating normally.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid bottom" id="map">
+    <div class="card">
+      <div class="card-title"><h2>National Weather Map</h2><span>Live station overview</span></div>
+      <div class="map" id="weatherMap">
+        <div class="marker red" style="left:53%;top:30%" title="Delhi 36°C"></div>
+        <div class="marker orange" style="left:43%;top:55%" title="Mumbai 30°C"></div>
+        <div class="marker" style="left:56%;top:64%" title="Bengaluru 25°C"></div>
+        <div class="marker red" style="left:68%;top:49%" title="Kolkata 31°C"></div>
+        <div class="marker" style="left:50%;top:74%" title="Chennai 29°C"></div>
+        <div class="marker orange" style="left:29%;top:38%" title="Jaipur 38°C"></div>
+        <div class="marker" style="left:38%;top:69%" title="Pune 27°C"></div>
+        <div class="marker" style="left:72%;top:67%" title="Bhubaneswar 30°C"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><h2>Rainfall Distribution</h2><span>Current month</span></div>
+      <div class="chart-wrap small"><canvas id="rainChart"></canvas></div>
+    </div>
+  </section>
+
+  <section class="card table-card" id="stations">
+    <div class="card-title"><h2>Regional Weather Intelligence</h2><span id="count">8 regions</span></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>City</th><th>Temp</th><th>Humidity</th><th>Rainfall</th><th>Wind</th><th>Condition</th><th>Status</th></tr></thead>
+        <tbody id="cityTable">
+          <tr><td>New Delhi</td><td>36°C</td><td>48%</td><td>2.4 mm</td><td>18 km/h</td><td>Sunny</td><td><span class="badge hot">Heat Watch</span></td></tr>
+          <tr><td>Mumbai</td><td>30°C</td><td>78%</td><td>18.2 mm</td><td>22 km/h</td><td>Cloudy</td><td><span class="badge">Normal</span></td></tr>
+          <tr><td>Bengaluru</td><td>25°C</td><td>72%</td><td>6.8 mm</td><td>12 km/h</td><td>Light Rain</td><td><span class="badge good">Stable</span></td></tr>
+          <tr><td>Chennai</td><td>29°C</td><td>81%</td><td>9.6 mm</td><td>20 km/h</td><td>Cloudy</td><td><span class="badge">Normal</span></td></tr>
+          <tr><td>Kolkata</td><td>31°C</td><td>84%</td><td>24.5 mm</td><td>29 km/h</td><td>Heavy Rain</td><td><span class="badge hot">Alert</span></td></tr>
+          <tr><td>Jaipur</td><td>38°C</td><td>39%</td><td>0.4 mm</td><td>15 km/h</td><td>Clear</td><td><span class="badge hot">Heat Watch</span></td></tr>
+          <tr><td>Pune</td><td>27°C</td><td>68%</td><td>5.1 mm</td><td>11 km/h</td><td>Partly Cloudy</td><td><span class="badge good">Stable</span></td></tr>
+          <tr><td>Bhubaneswar</td><td>30°C</td><td>86%</td><td>31.2 mm</td><td>34 km/h</td><td>Thunderstorm</td><td><span class="badge hot">Alert</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <div class="footer">National Weather Big Data Analytics Platform • Demo dashboard • Data shown is sample data for UI demonstration</div>
+</main>
+</div>
+
+<script>
+const chartFont={family:"Segoe UI, Arial"};
+const labels24=["00:00","02:00","04:00","06:00","08:00","10:00","12:00","14:00","16:00","18:00","20:00","22:00"];
+const temp24=[25.2,24.8,24.5,25.4,27.1,29.2,31.0,32.4,31.7,30.1,28.2,26.4];
+
+const trend=new Chart(document.getElementById("trendChart"),{
+ type:"line",data:{labels:labels24,datasets:[{label:"Avg Temperature",data:temp24,borderColor:"#35a7ff",backgroundColor:"#35a7ff18",fill:true,tension:.4,pointRadius:3,pointBackgroundColor:"#27d3e8"}]},
+ options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#9bb1c7",font:{family:"Segoe UI",size:10}}}},scales:{x:{grid:{color:"#173047"},ticks:{color:"#718ba5",font:{size:9}}},y:{grid:{color:"#173047"},ticks:{color:"#718ba5",font:{size:9}},title:{display:true,text:"°C",color:"#718ba5"}}}}
+});
+
+new Chart(document.getElementById("rainChart"),{
+ type:"bar",data:{labels:["North","West","Central","South","East","NE"],datasets:[{label:"Rainfall mm",data:[22,38,29,54,72,86],backgroundColor:"#27b9d5aa",borderRadius:5}]},
+ options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:"#718ba5",font:{size:9}}},y:{grid:{color:"#173047"},ticks:{color:"#718ba5",font:{size:9}}}}}
+});
+
+function updateTrend(){
+ const value=document.getElementById("range").value;
+ if(value==="Last 7 Days"){trend.data.labels=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];trend.data.datasets[0].data=[27.4,28.1,29.3,30.2,28.9,29.7,28.6]}
+ else if(value==="Last 30 Days"){trend.data.labels=["1","5","10","15","20","25","30"];trend.data.datasets[0].data=[26.8,27.5,29.1,30.4,28.7,31.2,28.6]}
+ else {trend.data.labels=labels24;trend.data.datasets[0].data=temp24}
+ trend.update();
+}
+function filterCities(){
+ const q=document.getElementById("search").value.toLowerCase();
+ let rows=[...document.querySelectorAll("#cityTable tr")], visible=0;
+ rows.forEach(r=>{const show=r.innerText.toLowerCase().includes(q);r.style.display=show?"":"none";if(show)visible++});
+ document.getElementById("count").textContent=visible+" region"+(visible===1?"":"s");
+}
+function refreshData(){
+ const b=document.querySelector(".btn:not(.primary)");
+ b.textContent="Refreshing…";setTimeout(()=>{b.textContent="✓ Updated";setTimeout(()=>b.textContent="↻ Refresh",1200)},700);
+}
+function downloadReport(){
+ const report=`NATIONAL WEATHER BIG DATA ANALYTICS REPORT\nGenerated: ${new Date().toLocaleString()}\n\nAverage temperature: 28.6°C\nNational rainfall: 42.8 mm\nActive stations: 2,847\nActive alerts: 17\n\nThis dashboard contains sample demonstration data.`;
+ const blob=new Blob([report],{type:"text/plain"}),a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);a.download="weather-analytics-report.txt";a.click();URL.revokeObjectURL(a.href);
+}
+document.querySelectorAll(".marker").forEach(m=>{
+ m.addEventListener("mouseenter",e=>{const t=document.getElementById("weatherMap");let tip=document.createElement("div");tip.className="tooltip";tip.id="tip";tip.textContent=e.target.title;tip.style.left=(e.target.offsetLeft+17)+"px";tip.style.top=(e.target.offsetTop-5)+"px";t.appendChild(tip);tip.style.display="block"});
+ m.addEventListener("mouseleave",()=>document.getElementById("tip")?.remove());
+});
+</script>
+</body>
+</html>
